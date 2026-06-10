@@ -22,16 +22,23 @@ public class AccountService {
     }
 
     private AccountResponseDTO toDTO(Account account) {
-        return new AccountResponseDTO(
-                account.getAccountId(),
-                account.getName(),
-                account.getEmail(),
-                account.getPhone(),
-                account.getBalance(),
-                account.getAccountType(),
-                account.getStatus(),
-                account.getCreatedAt()
+        AccountResponseDTO dto =
+                new AccountResponseDTO(
+                        account.getAccountId(),
+                        account.getName(),
+                        account.getEmail(),
+                        account.getPhone(),
+                        account.getBalance(),
+                        account.getAccountType(),
+                        account.getStatus(),
+                        account.getCreatedAt()
+                );
+
+        dto.setAccountNumber(
+                account.getAccountNumber()
         );
+
+        return dto;
     }
 
     public AccountResponseDTO createAccount(AccountRequestDTO request) {
@@ -43,7 +50,15 @@ public class AccountService {
         account.setStatus("ACTIVE");
         account.setBalance(BigDecimal.ZERO);
         account.setCreatedAt(LocalDateTime.now());
-        AccountResponseDTO response = toDTO(accountRepository.save(account));
+
+        // Save first to get ID
+        Account saved = accountRepository.save(account);
+        String accountNumber = "NV" + LocalDateTime.now().getYear()
+                + String.format("%06d", saved.getAccountId());
+        saved.setAccountNumber(accountNumber);
+        accountRepository.save(saved);
+
+        AccountResponseDTO response = toDTO(saved);
         auditLogService.log("system", "CREATE_ACCOUNT", "Account created for: " + request.getEmail());
         return response;
     }
@@ -79,6 +94,17 @@ public class AccountService {
     public String closeAccount(Long id) {
         Account account = accountRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Account not found with id: " + id));
+        if(
+                account.getBalance()
+                        .compareTo(BigDecimal.ZERO)
+                        > 0
+        )
+        {
+            throw new RuntimeException(
+                    "Please withdraw balance before closing account"
+            );
+        }
+
         account.setStatus("CLOSED");
         accountRepository.save(account);
         auditLogService.log("system", "CLOSE_ACCOUNT", "Account closed: " + id);

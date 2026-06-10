@@ -13,6 +13,7 @@ public class AccountResponseDTO {
     private String accountType;
     private String status;
     private LocalDateTime createdAt;
+    private String accountNumber;
 
     public AccountResponseDTO() {}
 
@@ -37,6 +38,7 @@ public class AccountResponseDTO {
     public String getAccountType() { return accountType; }
     public String getStatus() { return status; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public String getAccountNumber() { return accountNumber; }
 
     public void setAccountId(Long accountId) { this.accountId = accountId; }
     public void setName(String name) { this.name = name; }
@@ -46,4 +48,5 @@ public class AccountResponseDTO {
     public void setAccountType(String accountType) { this.accountType = accountType; }
     public void setStatus(String status) { this.status = status; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public void setAccountNumber(String accountNumber) { this.accountNumber = accountNumber; }
 }
