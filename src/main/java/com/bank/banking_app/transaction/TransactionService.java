@@ -66,7 +66,7 @@ public class TransactionService {
         transaction.setReferenceNumber(generateReferenceNumber());
         transaction.setDate(LocalDateTime.now());
         auditLogService.log("system", "DEPOSIT", "Deposited " + request.getAmount() + " to account: " + request.getFromAccountId());
-       // notificationService.createNotification(1L, "Deposit Successful", "₹" + request.getAmount() + " credited to your account", "DEPOSIT");
+        notificationService.createNotification(request.getFromAccountId(),"Deposit Successful", "₹" + request.getAmount() + " credited to your account. Ref: " + transaction.getReferenceNumber(), "DEPOSIT");
         return toDTO(transactionRepository.save(transaction));
     }
 
@@ -89,8 +89,7 @@ public class TransactionService {
         transaction.setReferenceNumber(generateReferenceNumber());
         transaction.setDate(LocalDateTime.now());
         auditLogService.log("system", "WITHDRAW", "Withdrawn " + request.getAmount() + " from account: " + request.getFromAccountId());
-        //notificationService.createNotification(1L, "Withdrawal Successful", "₹" + request.getAmount() + " withdrawn from your account", "WITHDRAW");
-        return toDTO(transactionRepository.save(transaction));
+        notificationService.createNotification(request.getFromAccountId(), "Withdrawal Successful", "₹" + request.getAmount() + " debited from your account. Ref: " + transaction.getReferenceNumber(), "WITHDRAW");        return toDTO(transactionRepository.save(transaction));
     }
 
     @Transactional
@@ -121,7 +120,7 @@ public class TransactionService {
         transaction.setReferenceNumber(generateReferenceNumber());
         transaction.setDate(LocalDateTime.now());
         auditLogService.log("system", "TRANSFER", "Transferred " + request.getAmount() + " from " + request.getFromAccountId() + " to " + request.getToAccountId());
-        // notificationService.createNotification(senderUserId, "₹" + request.getAmount() + " transferred. Ref: " + transaction.getReferenceNumber(), "TRANSFER");
+         notificationService.createNotification(request.getFromAccountId(), "Transfer Successful","₹" + request.getAmount() + " transferred. Ref: " + transaction.getReferenceNumber(), "TRANSFER");
         return toDTO(transactionRepository.save(transaction));
     }
 

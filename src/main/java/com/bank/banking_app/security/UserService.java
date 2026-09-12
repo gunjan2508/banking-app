@@ -1,11 +1,11 @@
 package com.bank.banking_app.security;
 
+import com.bank.banking_app.security.dto.UserResponseDTO;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.regex.Pattern;
-import com.bank.banking_app.security.dto.UserResponseDTO;
 
 @Service
 public class UserService {
@@ -15,15 +15,15 @@ public class UserService {
     private final BCryptPasswordEncoder passwordEncoder;
     private static final int MAX_ATTEMPTS = 5;
 
-//    public UserService(UserRepository userRepository, JwtUtil jwtUtil) {
-//        this.userRepository = userRepository;
-//        this.jwtUtil = jwtUtil;
-//        this.passwordEncoder = new BCryptPasswordEncoder();
-//    }
+    public UserService(UserRepository userRepository, JwtUtil jwtUtil) {
+        this.userRepository = userRepository;
+        this.jwtUtil = jwtUtil;
+        this.passwordEncoder = new BCryptPasswordEncoder();
+    }
 
     public String register(User user) {
-        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            throw new RuntimeException("Email already exists");
+        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+            throw new RuntimeException("Username already exists");
         }
         validatePassword(user.getPassword());
         user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -49,11 +49,9 @@ public class UserService {
     public String login(String username, String password) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-
         if (user.isLocked()) {
-            throw new RuntimeException("Account locked due to too many failed attempts. Contact support.");
+            throw new RuntimeException("Account locked. Contact support.");
         }
-
         if (!passwordEncoder.matches(password, user.getPassword())) {
             user.setFailedAttempts(user.getFailedAttempts() + 1);
             if (user.getFailedAttempts() >= MAX_ATTEMPTS) {
@@ -64,20 +62,27 @@ public class UserService {
             userRepository.save(user);
             throw new RuntimeException("Invalid password. " + (MAX_ATTEMPTS - user.getFailedAttempts()) + " attempts remaining.");
         }
-
         user.setFailedAttempts(0);
         user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
         return jwtUtil.generateToken(username);
     }
 
+    public String changePassword(String username, String currentPassword, String newPassword) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new RuntimeException("Current password is incorrect");
+        }
+        validatePassword(newPassword);
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        return "Password changed successfully";
+    }
+
     public User getUserByUsername(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-    }
-
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
     }
 
     public List<UserResponseDTO> getAllUsersDTO() {
@@ -86,7 +91,7 @@ public class UserService {
                 .map(user -> new UserResponseDTO(
                         user.getUserId(),
                         user.getUsername(),
-                        user.getEmail(),
+                        user.getEmail() != null ? user.getEmail() : "",
                         user.getRole(),
                         user.isLocked(),
                         user.getCreatedAt(),
@@ -110,16 +115,5 @@ public class UserService {
         user.setRole(role);
         userRepository.save(user);
         return "Role updated to " + role;
-    }
-    //private final BCryptPasswordEncoder passwordEncoder;
-
-    public UserService(
-            UserRepository userRepository,
-            JwtUtil jwtUtil,
-            BCryptPasswordEncoder passwordEncoder
-    ) {
-        this.userRepository = userRepository;
-        this.jwtUtil = jwtUtil;
-        this.passwordEncoder = passwordEncoder;
     }
 }

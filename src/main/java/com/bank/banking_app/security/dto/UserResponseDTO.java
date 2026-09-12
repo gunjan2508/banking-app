@@ -33,27 +33,21 @@ public class UserResponseDTO {
     public Long getUserId() {
         return userId;
     }
-
     public String getUsername() {
         return username;
     }
-
     public String getEmail() {
         return email;
     }
-
     public String getRole() {
         return role;
     }
-
     public boolean isLocked() {
         return locked;
     }
-
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
-
     public LocalDateTime getLastLogin() {
         return lastLogin;
     }}

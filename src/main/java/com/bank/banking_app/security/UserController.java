@@ -72,6 +72,19 @@ public class UserController {
     public ResponseEntity<String> unlockUser(@PathVariable Long userId) {
         return ResponseEntity.ok(userService.unlockUser(userId));
     }
+    @PutMapping("/change-password")
+    public ResponseEntity<String> changePassword(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody Map<String, String> request) {
+        try {
+            String token = authHeader.substring(7);
+            String username = jwtUtil.extractUsername(token);
+            return ResponseEntity.ok(userService.changePassword(username,
+                    request.get("currentPassword"), request.get("newPassword")));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 
     @PutMapping("/admin/role/{userId}")
     public ResponseEntity<String> changeRole(@PathVariable Long userId, @RequestBody Map<String, String> request) {
