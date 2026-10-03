@@ -13,6 +13,7 @@ public class Transaction {
     private Long transactionId;
 
     private Long fromAccountId;
+    private String category;
     private Long toAccountId;
     private BigDecimal amount;
     private String type;
@@ -32,6 +33,8 @@ public class Transaction {
     public String getDescription() { return description; }
     public String getReferenceNumber() { return referenceNumber; }
     public LocalDateTime getDate() { return date; }
+    public String getCategory() { return category; }
+
 
     public void setTransactionId(Long transactionId) { this.transactionId = transactionId; }
     public void setFromAccountId(Long fromAccountId) { this.fromAccountId = fromAccountId; }
@@ -42,4 +45,5 @@ public class Transaction {
     public void setDescription(String description) { this.description = description; }
     public void setReferenceNumber(String referenceNumber) { this.referenceNumber = referenceNumber; }
     public void setDate(LocalDateTime date) { this.date = date; }
+    public void setCategory(String category) { this.category = category; }
 }

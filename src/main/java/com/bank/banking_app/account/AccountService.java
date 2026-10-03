@@ -5,7 +5,6 @@ import com.bank.banking_app.account.dto.AccountResponseDTO;
 import com.bank.banking_app.audit.AuditLogService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -22,23 +21,23 @@ public class AccountService {
     }
 
     private AccountResponseDTO toDTO(Account account) {
-        AccountResponseDTO dto =
-                new AccountResponseDTO(
-                        account.getAccountId(),
-                        account.getName(),
-                        account.getEmail(),
-                        account.getPhone(),
-                        account.getBalance(),
-                        account.getAccountType(),
-                        account.getStatus(),
-                        account.getCreatedAt()
-                );
-
-        dto.setAccountNumber(
-                account.getAccountNumber()
-        );
-
+        AccountResponseDTO dto = new AccountResponseDTO();
+        dto.setAccountId(account.getAccountId());
+        dto.setName(account.getName());
+        dto.setEmail(account.getEmail());
+        dto.setPhone(account.getPhone());
+        dto.setBalance(account.getBalance());
+        dto.setAccountType(account.getAccountType());
+        dto.setStatus(account.getStatus());
+        dto.setCreatedAt(account.getCreatedAt());
+        dto.setAccountNumber(account.getAccountNumber());
         return dto;
+    }
+
+    private String generateAccountNumber() {
+        int year = LocalDateTime.now().getYear();
+        long count = accountRepository.count() + 1;
+        return String.format("NV%d%06d", year, count);
     }
 
     public AccountResponseDTO createAccount(AccountRequestDTO request) {
@@ -47,67 +46,47 @@ public class AccountService {
         account.setEmail(request.getEmail());
         account.setPhone(request.getPhone());
         account.setAccountType(request.getAccountType());
-        account.setStatus("ACTIVE");
         account.setBalance(BigDecimal.ZERO);
+        account.setStatus("ACTIVE");
         account.setCreatedAt(LocalDateTime.now());
+        account.setAccountNumber(generateAccountNumber());
+        auditLogService.log("system", "CREATE_ACCOUNT", "Account created for: " + request.getName());
+        return toDTO(accountRepository.save(account));
+    }
 
-        // Save first to get ID
-        Account saved = accountRepository.save(account);
-        String accountNumber = "NV" + LocalDateTime.now().getYear()
-                + String.format("%06d", saved.getAccountId());
-        saved.setAccountNumber(accountNumber);
-        accountRepository.save(saved);
-
-        AccountResponseDTO response = toDTO(saved);
-        auditLogService.log("system", "CREATE_ACCOUNT", "Account created for: " + request.getEmail());
-        return response;
+    public Page<AccountResponseDTO> getAllAccounts(int page, int size) {
+        return accountRepository.findAll(PageRequest.of(page, size)).map(this::toDTO);
     }
 
     public AccountResponseDTO getAccountById(Long id) {
         Account account = accountRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Account not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Account not found"));
         return toDTO(account);
-    }
-
-    public Page<AccountResponseDTO> getAllAccounts(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return accountRepository.findAll(pageable).map(this::toDTO);
     }
 
     public BigDecimal getBalance(Long id) {
         Account account = accountRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Account not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Account not found"));
         return account.getBalance();
     }
 
     public AccountResponseDTO updateAccount(Long id, AccountRequestDTO request) {
         Account account = accountRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Account not found with id: " + id));
+                .orElseThrow(() -> new RuntimeException("Account not found"));
         account.setName(request.getName());
+        account.setEmail(request.getEmail());
         account.setPhone(request.getPhone());
         account.setAccountType(request.getAccountType());
-        AccountResponseDTO response = toDTO(accountRepository.save(account));
         auditLogService.log("system", "UPDATE_ACCOUNT", "Account updated: " + id);
-        return response;
+        return toDTO(accountRepository.save(account));
     }
 
     public String closeAccount(Long id) {
         Account account = accountRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Account not found with id: " + id));
-        if(
-                account.getBalance()
-                        .compareTo(BigDecimal.ZERO)
-                        > 0
-        )
-        {
-            throw new RuntimeException(
-                    "Please withdraw balance before closing account"
-            );
-        }
-
+                .orElseThrow(() -> new RuntimeException("Account not found"));
         account.setStatus("CLOSED");
-        accountRepository.save(account);
         auditLogService.log("system", "CLOSE_ACCOUNT", "Account closed: " + id);
+        accountRepository.save(account);
         return "Account closed successfully";
     }
 }

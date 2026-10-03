@@ -19,16 +19,24 @@ public class LoanService {
     public Loan applyLoan(Loan loan) {
         loan.setStatus("APPLIED");
         loan.setAppliedAt(LocalDateTime.now());
-        loan.setEmi(calculateEmi(loan.getAmount(), loan.getTenure()));
+        loan.setEmi(calculateEmi(loan.getAmount(), loan.getTenure(), loan.getLoanType()));
         return loanRepository.save(loan);
     }
 
     // EMI Calculation formula
     // EMI = P * R * (1+R)^N / ((1+R)^N - 1)
     // P = principal, R = monthly rate (10% annual = 0.10/12), N = tenure months
-    private BigDecimal calculateEmi(BigDecimal principal, int tenureMonths) {
+    private BigDecimal calculateEmi(BigDecimal principal, int tenureMonths, String loanType) {
+        double annualRate;
+        if(loanType==null) annualRate=12.0;
+        else switch (loanType.toUpperCase()) {
+            case "HOME": annualRate = 8.5; break;
+            case "CAR": annualRate = 9.5; break;
+            case "EDUCATION": annualRate = 10.5; break;
+            default: annualRate = 12.0; break;
+        }
         double p = principal.doubleValue();
-        double r = 10.0 / 12 / 100; // 10% annual interest rate
+        double r = annualRate / 12 / 100;
         double n = tenureMonths;
         double emi = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
         return BigDecimal.valueOf(emi).setScale(2, RoundingMode.HALF_UP);
