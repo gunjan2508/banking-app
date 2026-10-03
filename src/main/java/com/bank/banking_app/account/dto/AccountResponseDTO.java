@@ -1,36 +1,35 @@
-package com.bank.banking_app.account;
+package com.bank.banking_app.account.dto;
 
-import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 
-@Entity
-@Table(name = "accounts")
-public class Account {
+public class AccountResponseDTO {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long accountId;
-
-    @NotBlank(message = "Name is required")
     private String name;
-
-    @Email(message = "Invalid email")
-    @NotBlank(message = "Email is required")
     private String email;
     private String phone;
     private BigDecimal balance;
     private String accountType;
     private String status;
     private LocalDateTime createdAt;
-    @Column(unique = true)
     private String accountNumber;
 
-    public Account() {}
+    public AccountResponseDTO() {}
 
-    // Getters
+    public AccountResponseDTO(Long accountId, String name, String email,
+                              String phone, BigDecimal balance, String accountType,
+                              String status, LocalDateTime createdAt) {
+        this.accountId = accountId;
+        this.name = name;
+        this.email = email;
+        this.phone = phone;
+        this.balance = balance;
+        this.accountType = accountType;
+        this.status = status;
+        this.createdAt = createdAt;
+    }
+
     public Long getAccountId() { return accountId; }
     public String getName() { return name; }
     public String getEmail() { return email; }
@@ -41,7 +40,6 @@ public class Account {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public String getAccountNumber() { return accountNumber; }
 
-    // Setters
     public void setAccountId(Long accountId) { this.accountId = accountId; }
     public void setName(String name) { this.name = name; }
     public void setEmail(String email) { this.email = email; }

@@ -1,9 +1,13 @@
 package com.bank.banking_app.account;
 
+import com.bank.banking_app.account.dto.AccountRequestDTO;
+import com.bank.banking_app.account.dto.AccountResponseDTO;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
-import java.util.List;
 
 @RestController
 @RequestMapping("/accounts")
@@ -15,38 +19,41 @@ public class AccountController {
         this.accountService = accountService;
     }
 
-    // POST /accounts — Create account
+    // POST /accounts
     @PostMapping
-    public ResponseEntity<Account> createAccount(@RequestBody Account account) {
-        Account created = accountService.createAccount(account);
-        return ResponseEntity.ok(created);
+    public ResponseEntity<AccountResponseDTO> createAccount(@Valid @RequestBody AccountRequestDTO request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(accountService.createAccount(request));
     }
 
-    // GET /accounts — Get all accounts
+    // GET /accounts?page=0&size=10
     @GetMapping
-    public ResponseEntity<List<Account>> getAllAccounts() {
-        return ResponseEntity.ok(accountService.getAllAccounts());
+    public ResponseEntity<Page<AccountResponseDTO>> getAllAccounts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(accountService.getAllAccounts(page, size));
     }
 
-    // GET /accounts/{id} — Get account by ID
+    // GET /accounts/{id}
     @GetMapping("/{id}")
-    public ResponseEntity<Account> getAccountById(@PathVariable Long id) {
+    public ResponseEntity<AccountResponseDTO> getAccountById(@PathVariable Long id) {
         return ResponseEntity.ok(accountService.getAccountById(id));
     }
 
-    // GET /accounts/{id}/balance — Check balance
+    // GET /accounts/{id}/balance
     @GetMapping("/{id}/balance")
     public ResponseEntity<BigDecimal> getBalance(@PathVariable Long id) {
         return ResponseEntity.ok(accountService.getBalance(id));
     }
 
-    // PUT /accounts/{id} — Update account
+    // PUT /accounts/{id}
     @PutMapping("/{id}")
-    public ResponseEntity<Account> updateAccount(@PathVariable Long id, @RequestBody Account account) {
-        return ResponseEntity.ok(accountService.updateAccount(id, account));
+    public ResponseEntity<AccountResponseDTO> updateAccount(
+            @PathVariable Long id,
+            @Valid @RequestBody AccountRequestDTO request) {
+        return ResponseEntity.ok(accountService.updateAccount(id, request));
     }
 
-    // DELETE /accounts/{id} — Close account
+    // DELETE /accounts/{id}
     @DeleteMapping("/{id}")
     public ResponseEntity<String> closeAccount(@PathVariable Long id) {
         return ResponseEntity.ok(accountService.closeAccount(id));
